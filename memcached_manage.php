@@ -49,7 +49,7 @@ class MemcachedManage
 			echo "FALSE host \n";
 			$error_args = 1;
 		}
-		if(!$this->target_port){
+		if(!is_numeric($this->target_port)){
 			echo "FALSE port \n";
 			$error_args = 1;
 		}
@@ -92,6 +92,11 @@ class MemcachedManage
 	private function stats()
 	{
 		$cmd = "echo 'stats' | nc {$this->target_host} {$this->target_port}";
+		//unix domain sock
+		if(strpos($this->target_host, 'sock') && $this->target_port == 0){
+			$cmd = "echo 'stats' | nc -U {$this->target_host}";
+		}
+
 		exec($cmd, $output, $return_var);
 
 		if($return_var == 0){
@@ -112,6 +117,10 @@ class MemcachedManage
 		$slab_arr		= array();
 
 		$cmd = "echo 'stats items' | nc {$this->target_host} {$this->target_port}";
+		//unix domain sock
+		if(strpos($this->target_host, 'sock') && $this->target_port == 0){
+			$cmd = "echo 'stats items' | nc -U {$this->target_host}";
+		}
 		exec($cmd, $output, $return_var);
 
 		if($return_var == 0){
@@ -228,7 +237,6 @@ class MemcachedManage
 	{
 		if(isset($this->memcached)) return;
 		$this->memcached = new Memcached();
-		$res = $this->memcached->addServer($this->target_host, $this->target_port);
 		if (!$this->memcached->addServer($this->target_host, $this->target_port)) {
 			echo 'fail memcached->addServer';
 			exit;
